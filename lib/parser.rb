@@ -1,8 +1,7 @@
-# frozen_string_literal: true
+require "parser/version"
 
-require_relative "parser/version"
-
-module Parser
-  class Error < StandardError; end
-  # Your code goes here...
+module ParserGem
+  def something
+    true
+  end 
 end
