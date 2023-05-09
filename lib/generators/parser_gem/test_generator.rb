@@ -41,8 +41,15 @@ module ParserGem
           css_file_path = download_css(path_to_download(link['href']), controller_name)
           link.replace("<%= stylesheet_link_tag '#{css_file_path}' %>")
         end
-        file.puts page.css('head').to_s.gsub(/(&lt;%|%&gt;)/) {|x| x=='&lt;%' ? '<%' : '%>'}
         
+        page.css('script[type="text/javascript"]').each do |link|
+          if link['src'] != nil
+            js_file_name = download_js(path_to_download(link['src']), controller_name)
+            link.replace("<%= javascript_tag '#{js_file_name}' %>")
+          end
+        end
+        file.puts page.css('head').to_s.gsub(/(&lt;%|%&gt;)/) {|x| x=='&lt;%' ? '<%' : '%>'}
+
         page.css('img, video').each do |media|
           media_file_path = download_media(path_to_download(media['src']), controller_name)
           media['src'] = media_file_path
@@ -50,11 +57,16 @@ module ParserGem
         
         file.puts "<% end %>"
 
-        file.puts page.css('body').to_html
+        file.puts page.css('body').to_s.gsub(/(&lt;%|%&gt;)/) {|x| x=='&lt;%' ? '<%' : '%>'}
       end
+      repair_css(file_path, controller_name)
     end
     
     end
+
+    # ШАБЛОНИЗАЦИЯ ХЕДЕРА - ФУТЕРА
+    # ОБРАБОТКА ГЛАВНОГО ШАБЛОНА
+    # СОЗДАНИЕ ЯЗЫКОВЫХ ВЕРСИЙ
     
     private
 
@@ -70,6 +82,22 @@ module ParserGem
       else
         repair_css(css_file_path, controller_name) 
         "#{File.basename(css_url)}"
+      end
+    end
+
+    def download_js(js_url, controller_name)
+      begin
+      js_file_path = File.join('app/javascript', File.basename(js_url))
+      File.open(js_file_path, 'wb') do |file|
+        file.write(URI.open(js_url).read)
+      end
+      File.open('app/javascript/application.js', 'a') do |file|
+        file.puts("import \"#{File.basename(js_url)}\"")
+      end
+      rescue
+        puts "ОШИБКА ПРИ ЗАГРУЗКЕ \"#{js_url}\""
+      else
+        "#{File.basename(js_url)}"
       end
     end
 
@@ -90,17 +118,18 @@ module ParserGem
       css_content = File.read(css_path)
       css_content.gsub!(/url\((.*?)\)/i) do |match|
         url = $1.gsub(/['"]/, '') # Remove quotes from url
-        if url.start_with?('/') # Check if url is a relative path
+        if url.start_with?('http') # Check if url is a relative path
+          match
+        else
           new_url = download_media(path_to_download(url), controller_name)
           "url(/#{new_url})"
-        else
-          match # Return original match if url is not a relative path
         end
       end
       File.write(css_path, css_content)
     end
 
     def path_to_download(path)
+      begin
       result = ""
       if path.include?("http://") || path.include?("https://") || path.include?(".com")
         return path
@@ -111,8 +140,12 @@ module ParserGem
           result = "http://#{options['target_url']}/#{path}"
         end
       end
+      rescue
+      puts "ОШИБКА ПРИ ФОРМИРОВАНИИ ССЫЛКИ: \"#{path}\""
+      else
       puts "ПОМЕНЯЛ #{path} НА #{normalize_link(result.gsub(/\?.*/, ''))}"
       normalize_link(result.gsub(/\?.*/, '')) 
+      end
     end
 
     def normalize_link(link)
