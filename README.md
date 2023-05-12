@@ -1,35 +1,105 @@
-# Parser
+# English
 
-TODO: Delete this and the text below, and describe your gem
+# Parsergemv 0.1
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/parser`. To experiment with that code, run `bin/console` for an interactive prompt.
+The gem is intended for copying and automatically integrating the front-end of the target site into Rails. It is also possible to automatically translate site pages, and create a multilingual site structure in Rails.
+
+Runtime versions tested:
+Ruby 3.0.0
+Rails 7.0.4.3
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Install the gem and add it to the Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
+     $ bundle add parsergem
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+If you are not using bundler, you can install the gem like this:
 
-If bundler is not being used to manage dependencies, install the gem by executing:
-
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_PRIOR_TO_RELEASE_TO_RUBYGEMS_ORG
+     $ gem install parsergem
 
 ## Usage
 
-TODO: Write usage instructions here
+It is important that the target site meets certain requirements:
+1) The presence of a sitemap, at "target.com/sitemap.xml"
+2) If you need to make language versions, the target site must be monolingual
 
-## Development
+At this stage, the gem provides one generator to perform the declared functions.
+After installing the gem, run the generator:
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+     $ rails g parser_gem:test --target-url "target.com"
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+The generator takes the following parameters:
+     For normal cloning:
+         `--target_url` - Domain name of the target site
+     To template the header and footer of the site:
+         `--header_class_name` - ID of the block in which the header is located
+         `--footer_class_name` - ID of the block containing the footer
+     To create language versions (You must fill in all parameters):
+         `--target_site_language` - Current site language
+         `--languages` - "en es de" format string, with a list of language codes to which the original site should be translated
+         `--aws_region` - AWS Region
+         `--aws_public_key` - The public key of your AWS TRANSLATE API
+         `--aws_secret_key` - The secret key of your AWS TRANSLATE API
+
+After the generator has finished its work, you will most likely need to modify the header and footer parshals to fix the links.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/parser.
+Bug reports and pull requests are welcome on GitHub at https://github.com/d1mentor/parser.
+
+# Russian
+
+# Parsergem v 0.1
+
+Гем предназначен для копирования и автоматической интеграции в Rails фронтенда целевого сайта. Так-же есть возможность автоматического перевода страниц сайта, и создания в Rails структуры мультиязычного сайта.
+
+Проверенные версии среды выполнения:
+Ruby 3.0.0
+Rails 7.0.4.3
+
+## Установка
+
+Установить гем и добавить его в Gemfile:
+
+    $ bundle add parsergem
+
+Если вы не используете bundler, установить гем можно так:
+
+    $ gem install parsergem 
+
+## Использование
+
+Важно, что-бы целевой сайт соответствовал некоторым требованиям:
+1) Наличие карты сайта, по адресу "target.com/sitemap.xml"
+2) Если необходимо сделать языковые версии, целевой сайт должен быть моноязычным
+
+На данном этапе гем предоставляет один генератор, для выполнения заявленных функций.
+После установки гема, запустите генератор:
+
+    $ rails g parser_gem:test --target-url "target.com"
+
+Генератор принимает следующие параметры:
+    Для обычного клонирования:
+        `--target_url` - Доменное имя целевого сайта
+    Для шаблонизации хедера и футера сайта:
+        `--header_class_name` - ID блока в котором находится хедер
+        `--footer_class_name` - ID блока в котором находится футер
+    Для создания языковых версий(Необходимо заполнить все параметры):
+        `--target_site_language` - Текущий язык сайта
+        `--languages` - Строка формата "en es de", с перечнем кодов языков, на которые стоит перевести оригинальный сайт
+        `--aws_region` - Регион AWS
+        `--aws_public_key` - Публичный ключ вашего AWS TRANSLATE API 
+        `--aws_secret_key` - Секретный ключ вашего AWS TRANSLATE API
+
+После того как генератор закончит свою работу, вам, скорее всего, придётся доработать паршалы хедеров и футеров для исправления ссылок. 
+
+## Содействие
+
+Сообщения об ошибках и запросы на доработку гема приветствуются на GitHub по адресу https://github.com/d1mentor/parser
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+
