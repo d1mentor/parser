@@ -1,8 +1,9 @@
 PATH
   remote: .
   specs:
-    parsergem (0.1.0)
+    parsergem (0.1.1)
       activesupport (>= 5.0.0)
+      aws-sdk-translate
       nokogiri
       rack (>= 1.4.0)
       ruby-progressbar
@@ -16,16 +17,28 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
+    aws-eventstream (1.2.0)
+    aws-partitions (1.763.0)
+    aws-sdk-core (3.172.0)
+      aws-eventstream (~> 1, >= 1.0.2)
+      aws-partitions (~> 1, >= 1.651.0)
+      aws-sigv4 (~> 1.5)
+      jmespath (~> 1, >= 1.6.1)
+    aws-sdk-translate (1.50.0)
+      aws-sdk-core (~> 3, >= 3.165.0)
+      aws-sigv4 (~> 1.1)
+    aws-sigv4 (1.5.2)
+      aws-eventstream (~> 1, >= 1.0.2)
     concurrent-ruby (1.2.2)
     diff-lcs (1.5.0)
     i18n (1.13.0)
       concurrent-ruby (~> 1.0)
+    jmespath (1.6.2)
     minitest (5.18.0)
     nokogiri (1.14.3-x86_64-linux)
       racc (~> 1.4)
     racc (1.6.2)
     rack (3.0.7)
-    rainbow (3.1.1)
     rake (13.0.6)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
@@ -40,8 +53,6 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.12.0)
     rspec-support (3.12.0)
-    rubocop (0.7.2)
-      rainbow (>= 1.1.4)
     ruby-progressbar (1.13.0)
     thor (1.2.1)
     tzinfo (2.0.6)
@@ -54,7 +65,6 @@ DEPENDENCIES
   parsergem!
   rake (~> 13.0)
   rspec (~> 3.0)
-  rubocop
 
 BUNDLED WITH
    2.4.9

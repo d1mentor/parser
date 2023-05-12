@@ -300,7 +300,7 @@ module ParserGem
     def set_actions(sitemap) # Set actions from sitemap    
       actions = []
       urls = []
-      languages = options[:languages].split(' ')
+      languages = options[:languages].split(' ') if options[:languages]
       sitemap.xpath('//xmlns:url/xmlns:loc').each do |url|
         urls << url.text
       end
@@ -317,17 +317,19 @@ module ParserGem
         
         actions << element
 
-        languages.each do |lng_ver|
-          element = { rails_route: "#{lng_ver}#{url.gsub('http://', '').gsub('https://', '').gsub("#{options[:target_url]}", '').delete('.')}",
-                      action_name: "#{lng_ver}_#{url.gsub('http://', '').gsub('https://', '').gsub("#{options[:target_url]}", '').delete('.').delete('/').gsub('-', '_')}",
-                      native_url:  "#{url}", 
-                      lang: lng_ver }
+        if options[:languages]
+          languages.each do |lng_ver|
+            element = { rails_route: "#{lng_ver}#{url.gsub('http://', '').gsub('https://', '').gsub("#{options[:target_url]}", '').delete('.')}",
+                        action_name: "#{lng_ver}_#{url.gsub('http://', '').gsub('https://', '').gsub("#{options[:target_url]}", '').delete('.').delete('/').gsub('-', '_')}",
+                        native_url:  "#{url}", 
+                        lang: lng_ver }
 
-          if element[:rails_route] == "#{lng_ver}/"
-            element[:action_name] = "#{lng_ver}_index"
-          end
+            if element[:rails_route] == "#{lng_ver}/"
+              element[:action_name] = "#{lng_ver}_index"
+            end
         
-          actions << element
+            actions << element
+          end
         end
       end
       actions
