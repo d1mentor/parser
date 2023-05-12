@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parsergem (0.1.1)
+    parsergem (0.1.2)
       activesupport (>= 5.0.0)
       aws-sdk-translate
       nokogiri

@@ -46,10 +46,12 @@ module ParserGem
                                   :starting_at    => 0,
                                   :total          => actions.size)
     
-    credentials = Aws::Credentials.new( options[:aws_public_key], options[:aws_secret_key])      
-    client = Aws::Translate::Client.new( region: options[:aws_region],
-                                         credentials: credentials)
-                                  
+    if options[:languages]
+      credentials = Aws::Credentials.new( options[:aws_public_key], options[:aws_secret_key])      
+      client = Aws::Translate::Client.new( region: options[:aws_region],
+                                           credentials: credentials)
+    end
+            
     actions.each do |action| 
       file_path = File.join('app/views', controller_name, "#{action[:action_name]}.html.erb") # Set view
       File.open(file_path, 'wb') do |file|
