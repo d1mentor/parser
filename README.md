@@ -42,7 +42,7 @@ To create language versions (You must fill in all parameters): <br />
 `--aws_public_key` - The public key of your AWS TRANSLATE API <br />
 `--aws_secret_key` - The secret key of your AWS TRANSLATE API <br />
 
-After the generator has finished its work, you will most likely need to modify the header and footer parshals to fix the links.
+After the generator has finished its work, you will most likely need to modify the header and footer parshals to fix the links. And in current version some media files includes in css may be broken.
 
 ## Contributing
 
@@ -92,7 +92,7 @@ Rails 7.0.4.3
         `--aws_public_key` - Публичный ключ вашего AWS TRANSLATE API <br />
         `--aws_secret_key` - Секретный ключ вашего AWS TRANSLATE API <br />
 
-После того как генератор закончит свою работу, вам, скорее всего, придётся доработать паршалы хедеров и футеров для исправления ссылок. 
+После того как генератор закончит свою работу, вам, скорее всего, придётся доработать паршалы хедеров и футеров для исправления ссылок. Так же в текущей версии некоторые ссылки на подключение фотографий в css файлах могут не работать.
 
 ## Содействие
 
