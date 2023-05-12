@@ -30,17 +30,17 @@ After installing the gem, run the generator:
      $ rails g parser_gem:test --target-url "target.com"
 
 The generator takes the following parameters:
-     For normal cloning:
-         `--target_url` - Domain name of the target site
-     To template the header and footer of the site:
-         `--header_class_name` - ID of the block in which the header is located
-         `--footer_class_name` - ID of the block containing the footer
-     To create language versions (You must fill in all parameters):
-         `--target_site_language` - Current site language
-         `--languages` - "en es de" format string, with a list of language codes to which the original site should be translated
-         `--aws_region` - AWS Region
-         `--aws_public_key` - The public key of your AWS TRANSLATE API
-         `--aws_secret_key` - The secret key of your AWS TRANSLATE API
+For normal cloning:
+`--target_url` - Domain name of the target site
+To template the header and footer of the site:
+`--header_class_name` - ID of the block in which the header is located
+`--footer_class_name` - ID of the block containing the footer
+To create language versions (You must fill in all parameters):
+`--target_site_language` - Current site language
+`--languages` - "en es de" format string, with a list of language codes to which the original site should be translated
+`--aws_region` - AWS Region
+`--aws_public_key` - The public key of your AWS TRANSLATE API
+`--aws_secret_key` - The secret key of your AWS TRANSLATE API
 
 After the generator has finished its work, you will most likely need to modify the header and footer parshals to fix the links.
 
