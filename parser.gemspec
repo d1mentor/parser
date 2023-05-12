@@ -3,7 +3,7 @@
 require_relative "lib/parser/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "parser"
+  spec.name = "parsergem"
   spec.version = Parser::VERSION
   spec.authors = ["Дмитрий Герасименко"]
   spec.email = ["gerasimenkot92@gmail.com"]
@@ -24,6 +24,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogiri'
   spec.add_dependency "activesupport", ">= 5.0.0"
   spec.add_dependency "rack", ">= 1.4.0"
+  spec.add_dependency "ruby-progressbar"
+  spec.add_dependency "aws-sdk-translate"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
