@@ -17,12 +17,15 @@ module ParserGem
     class_option :aws_region, type: :string, default: nil # Set aws region for translate API
     class_option :aws_public_key, type: :string, default: nil # Set aws api public key
     class_option :aws_secret_key, type: :string, default: nil # Set aws api secret key
+    class_option :to_partials_blocks_ids, type: :array, default: [] # Set blocks ids which must be partial
 
     def clone # Main method 
     sitemap = Nokogiri::XML(URI.open("http://#{options[:target_url]}/sitemap.xml")) # Load sitemap.xml
     controller_name = options[:target_url].split('/').last.delete('.').delete('-') # Set controller name from clear domain name
-    actions = set_actions(sitemap) # Set actions for controller
+    actions = set_actions(sitemap)[220..221] # Set actions for controller
     
+    puts options[:to_partials_blocks_ids].to_s
+
     actions.each do |action| # Create routes
       if action[:rails_route] == '/' 
         route "root \"#{controller_name}##{action[:action_name]}\""
@@ -75,14 +78,6 @@ module ParserGem
               media['alt'] = translate(media['alt'], action[:lang], client)
             end
           end
-
-          page.traverse do |node|
-            if node.text? && !node.parent.name.in?(%w[script style])
-              if node.text.length > 1
-                node.content = translate(node.text, action[:lang], client)
-              end
-            end
-          end
         end
 
         head = page.at_css('head') 
@@ -119,16 +114,42 @@ module ParserGem
 
         file.puts "<% end %>"
 
-        if !File.exist?("app/views/layouts/_#{action[:lang]}header.html.erb") || !File.exist?("app/views/layouts/_#{action[:lang]}footer.html.erb") # Create footer and header partials
+        if !File.exist?("app/views/layouts/_#{action[:lang]}header.html.erb") # Create footer and header partials
           if options[:header_class_name] # Find and save header to partial
             File.open(File.join('app/views/layouts/', "_#{action[:lang]}header.html.erb"), 'w') do |file| 
-              file.puts body.css("div[id=\"#{options[:header_class_name]}\"]").to_html
+              if action[:lang]
+                translated_block = body.css("div[id=\"#{options[:header_class_name]}\"]").first
+                translated_block.traverse do |node| 
+                  if node.text? && !node.parent.name.in?(%w[script style])
+                    if node.text.length > 1
+                      node.content = translate(node.text, action[:lang], client)
+                    end
+                  end
+                end
+                file.puts translated_block.to_html
+              else
+                file.puts body.css("div[id=\"#{options[:header_class_name]}\"]").first.to_html
+              end
             end
           end
+        end
 
+        if !File.exist?("app/views/layouts/_#{action[:lang]}footer.html.erb")
           if options[:footer_class_name] # Find and save footer to partial
             File.open(File.join('app/views/layouts/', "_#{action[:lang]}footer.html.erb"), 'w') do |file| 
-              file.puts body.css("div[id=\"#{options[:footer_class_name]}\"]").to_html
+              if action[:lang]
+                translated_block = body.css("div[id=\"#{options[:footer_class_name]}\"]").first
+                translated_block.traverse do |node| 
+                  if node.text? && !node.parent.name.in?(%w[script style])
+                    if node.text.length > 1
+                      node.content = translate(node.text, action[:lang], client)
+                    end
+                  end
+                end
+                file.puts translated_block.to_html
+              else
+                file.puts body.css("div[id=\"#{options[:footer_class_name]}\"]").first.to_html
+              end
             end
           end
         end
@@ -158,14 +179,61 @@ module ParserGem
           end
         end
 
+        options[:to_partials_blocks_ids].each do |block_id|
+          body.css("div[id=\"#{block_id}\"]").each do |block|
+            if !File.exist?("app/views/layouts/_#{action[:lang]}#{block_id}.html.erb")
+              File.open(File.join('app/views/layouts/', "_#{action[:lang]}#{block_id}.html.erb"), 'w') do |file| 
+              if action[:lang]
+                translated_block = body.css("div[id=\"#{block_id}\"]").first
+                translated_block.traverse do |node| 
+                  if node.text? && !node.parent.name.in?(%w[script style])
+                    if node.text.length > 1
+                      node.content = translate(node.text, action[:lang], client)
+                    end
+                  end
+                end
+                file.puts translated_block.to_html
+              else
+                file.puts body.css("div[id=\"#{block_id}\"]").first.to_html
+              end
+              end
+            end
+            block.replace("<%= render \"layouts/#{action[:lang]}#{block_id}\" %>")
+          end
+        end
+
         if action[:lang]
           body.css('a').each do |link| # Repair links for lang versions
             if link['href']
-              if !link['href'].include?('http') 
-                if link['href'][0] == '/'
+              if !link['href'].include?('http') && !link['href'].include?('mailto:') && !link['href'].include?('tel:')
+                if link['href'][0] == '/' && ( !link['href'].include?('.jpg') || !link['href'].include?('.jpeg') || !link['href'].include?('.png') || !link['href'].include?('.webp'))
                   link['href'] = "/#{action[:lang]}#{link['href']}"
                 else
                   link['href'] = "/#{action[:lang]}/#{link['href']}"
+                end
+              end
+              if link['title']
+                link['title'] = translate(link['title'], action[:lang], client)
+              end
+            end
+          end
+        end
+
+        body.css('a').each do |link|
+          if link['href']
+            if link['href'][0] != '/'
+              link['href'] = "/#{link['href']}"
+            end
+            link['href'] = link['href'].gsub('/..', '')
+          end
+        end
+
+        if action[:lang]
+          body.traverse do |node|
+            if node.text? && !node.parent.name.in?(%w[script style])
+              if node.text.length > 1
+                if !node.content.include?('<%= render')
+                  node.content = translate(node.text, action[:lang], client)
                 end
               end
             end
@@ -190,10 +258,10 @@ module ParserGem
     private
 
     def translate(text_to_translate, target_lang, client)
-        client.translate_text({ text: "#{text_to_translate}", # required
-        source_language_code: "#{options[:target_site_language]}", # required
-        target_language_code: "#{target_lang}", # required
-        settings: { formality: "FORMAL" } }).translated_text
+      client.translate_text({ text: "#{text_to_translate}", # required
+      source_language_code: "#{options[:target_site_language]}", # required
+      target_language_code: "#{target_lang}", # required
+      settings: { formality: "FORMAL" } }).translated_text
     end
 
     def download_css(css_url, controller_name) # Method for save css table to file
