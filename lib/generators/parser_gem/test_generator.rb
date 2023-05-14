@@ -18,11 +18,17 @@ module ParserGem
     class_option :aws_public_key, type: :string, default: nil # Set aws api public key
     class_option :aws_secret_key, type: :string, default: nil # Set aws api secret key
     class_option :to_partials_blocks_ids, type: :array, default: [] # Set blocks ids which must be partial
+    class_option :media_to_ignore, type: :array, default: [] # Set media filenames which must be ignored
+    class_option :media_to_ignore_for_langs, type: :array, default: [] # Set media filenames which must be ignored in lang versions
+    class_option :create_meta_og, type: :boolean, default: false # Create meta og: tags from standart meta tags
+    class_option :inline_styles_to_files, type: :boolean, default: false
+    class_option :inline_scripts_to_files, type: :boolean, default: false
+    class_option :meta_tags_names_to_ignore, type: :array, default: []
 
     def clone # Main method 
     sitemap = Nokogiri::XML(URI.open("http://#{options[:target_url]}/sitemap.xml")) # Load sitemap.xml
     controller_name = options[:target_url].split('/').last.delete('.').delete('-') # Set controller name from clear domain name
-    actions = set_actions(sitemap)[220..221] # Set actions for controller
+    actions = set_actions(sitemap)[0..1] # Set actions for controller
     
     puts options[:to_partials_blocks_ids].to_s
 
@@ -54,12 +60,21 @@ module ParserGem
       client = Aws::Translate::Client.new( region: options[:aws_region],
                                            credentials: credentials)
     end
+
+    inline_styles = []
+    inline_scripts = []
             
     actions.each do |action| 
       file_path = File.join('app/views', controller_name, "#{action[:action_name]}.html.erb") # Set view
       File.open(file_path, 'wb') do |file|
         page = Nokogiri::HTML(URI.open("#{action[:native_url]}")) # Parse page from url in sitemap
         
+        page.css('meta').each do |meta|
+          if options[:meta_tags_names_to_ignore].include?(meta['name'].to_s)
+            meta.replace('')
+          end
+        end
+
         if action[:lang]
           page.css('title').each do |title|
             if title.inner_html.length > 1
@@ -80,6 +95,14 @@ module ParserGem
           end
         end
 
+        if options[:media_to_ignore_for_langs] && action[:lang]
+          page.css('img, video').each do |media|
+            if options[:media_to_ignore_for_langs].include?(File.basename(media['src'])) 
+              media.replace('')
+            end
+          end
+        end
+
         head = page.at_css('head') 
         body = page.at_css('body')
 
@@ -90,6 +113,12 @@ module ParserGem
         
         head.css('meta').each do |meta|
           file.puts meta
+        end
+
+        if options[:create_meta_og]
+          file.puts "<meta property=\"og:titile\" content=\"#{head.css('title').first.inner_html}\" >"
+          file.puts "<meta property=\"og:description\" content=\"#{head.css('meta[name=\"description\"]').first['content']}\" >"
+          file.puts "<meta property=\"og:image\" content=\" \" >"
         end
 
         page.css('link[rel="stylesheet"]').each do |link| # Repair css including for Rails
@@ -104,12 +133,54 @@ module ParserGem
           end
         end
 
-        page.css('style').each do |style_node| # Move all style tags to head
-          file.puts style_node
+        if options[:inline_styles_to_files]
+          page.css('style').each do |style_node| 
+            node_hash = { filename: "inline_style_#{inline_styles.size + 1}.css", 
+                          content: style_node.content }
+            
+            if inline_styles.size > 0
+              existing_hash = inline_styles.find { |elem| elem[:content] == node_hash[:content] }
+              if existing_hash
+                file.puts "<%= stylesheet_link_tag '#{existing_hash[:filename]}' %>"
+              else
+                inline_styles << node_hash  
+                file.puts "<%= stylesheet_link_tag '#{node_hash[:filename]}' %>"      
+              end
+            else
+              inline_styles << node_hash 
+              file.puts "<%= stylesheet_link_tag '#{node_hash[:filename]}' %>"
+            end
+          end
+        else
+          page.css('style').each do |style_node| # Move all style tags to head
+            file.puts style_node
+          end
         end
 
-        page.css('script').each do |script_node| # Move all script tags to head
-          file.puts script_node
+        if options[:inline_scripts_to_files]
+          page.css('script').each do |script_node|
+            if script_node.content && script_node.content.length > 1 
+              node_hash = { filename: "inline_script_#{inline_scripts.size + 1}.js", 
+                            content: script_node.content }
+            
+              if inline_scripts.size > 0
+                existing_hash = inline_scripts.find { |elem| elem[:content] == node_hash[:content] }
+                if existing_hash
+                  file.puts "<%= javascript_tag '#{existing_hash[:filename]}' %>"
+                else
+                  inline_scripts << node_hash  
+                  file.puts "<%= javascript_tag '#{node_hash[:filename]}' %>"
+                end
+              else
+                inline_scripts << node_hash 
+                file.puts "<%= javascript_tag '#{node_hash[:filename]}' %>"
+              end
+            end
+          end
+        else
+          page.css('script').each do |script_node| # Move all script tags to head
+            file.puts script_node
+          end
         end
 
         file.puts "<% end %>"
@@ -245,7 +316,27 @@ module ParserGem
       repair_css(file_path, controller_name) # Repair links in inline css
       progress.increment
     end
-    
+
+    if options[:inline_styles_to_files]
+      inline_styles.each do |style|
+        File.open(File.join('app/assets/stylesheets', style[:filename]), 'wb') do |file|
+          file.puts style[:content]
+        end
+        repair_css("app/assets/stylesheets/#{style[:filename]}", controller_name)
+      end
+    end
+
+    if options[:inline_scripts_to_files]
+      inline_scripts.each do |script|
+        File.open(File.join('app/javascript/', script[:filename]), 'wb') do |file|
+          file.puts script[:content]
+        end
+        File.open('app/javascript/application.js', 'a') do |file|
+          file.puts("import \"#{script[:filename]}\"") # add downloaded js file to js including file
+        end
+      end
+    end
+
     # editing app/views/layouts/application.html.erb template
     File.open("app/views/layouts/application.html.erb", 'w') do |file|
       new_layout = "<!DOCTYPE html><html><head><%= yield :head %></head><body><%= yield %></body></html>"
