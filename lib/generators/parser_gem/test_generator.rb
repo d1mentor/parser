@@ -28,7 +28,7 @@ module ParserGem
     def clone # Main method 
     sitemap = Nokogiri::XML(URI.open("http://#{options[:target_url]}/sitemap.xml")) # Load sitemap.xml
     controller_name = options[:target_url].split('/').last.delete('.').delete('-') # Set controller name from clear domain name
-    actions = set_actions(sitemap)[0..1] # Set actions for controller
+    actions = set_actions(sitemap) # Set actions for controller
     
     puts options[:to_partials_blocks_ids].to_s
 
