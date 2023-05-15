@@ -28,9 +28,7 @@ module ParserGem
     def clone # Main method 
     sitemap = Nokogiri::XML(URI.open("http://#{options[:target_url]}/sitemap.xml")) # Load sitemap.xml
     controller_name = options[:target_url].split('/').last.delete('.').delete('-') # Set controller name from clear domain name
-    actions = set_actions(sitemap) # Set actions for controller
-    
-    puts options[:to_partials_blocks_ids].to_s
+    actions = set_actions(sitemap)
 
     actions.each do |action| # Create routes
       if action[:rails_route] == '/' 
@@ -244,7 +242,7 @@ module ParserGem
 
         body.css('a').each do |link| # Self absolute links to media repair
           if link['href']  
-            if link['href'].include?("http://#{options[:target_url]}") && (link['href'].include?('.png') || link['href'].include?('.jpg') || link['href'].include?('.jpeg') || link['href'].include?('.webp'))
+            if link['href'].include?("http://#{options[:target_url]}") && (link['href'].include?('.png') || link['href'].include?('.jpg') || link['href'].include?('.jpeg') || link['href'].include?('.webp') || link['href'].include?('.pdf'))
               link['href'] = download_media(link['href'], controller_name)
             end
           end
@@ -276,8 +274,8 @@ module ParserGem
         if action[:lang]
           body.css('a').each do |link| # Repair links for lang versions
             if link['href']
-              if !link['href'].include?('http') && !link['href'].include?('mailto:') && !link['href'].include?('tel:')
-                if link['href'][0] == '/' && ( !link['href'].include?('.jpg') || !link['href'].include?('.jpeg') || !link['href'].include?('.png') || !link['href'].include?('.webp'))
+              if !link['href'].include?('http') && !link['href'].include?('mailto:') && !link['href'].include?('tel:') && !link['href'].include?('.jpg') && !link['href'].include?('.jpeg') && !link['href'].include?('.png') && !link['href'].include?('.webp') && !link['href'].include?('.pdf')
+                if link['href'][0] == '/' 
                   link['href'] = "/#{action[:lang]}#{link['href']}"
                 else
                   link['href'] = "/#{action[:lang]}/#{link['href']}"
@@ -308,6 +306,14 @@ module ParserGem
                 end
               end
             end
+          end
+        end
+
+        if action[:lang]
+          body.css('img, video').each do |tag|
+            if tag['title'] && tag['title'].length > 2
+              tag['title'] = translate(tag['title'], action[:lang], client)
+            end 
           end
         end
 
